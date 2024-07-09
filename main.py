@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Query, Path, Cookie, Response
+from fastapi import FastAPI, Query, Path, Cookie, Response, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -22,6 +22,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    response.headers["X-Process-Time"] = str(process_time)
+    return response
 
 @app.get('/')  # base route
 
@@ -135,3 +143,4 @@ async def read_items(ads_id: str = Cookie(None)):
 
 # static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
